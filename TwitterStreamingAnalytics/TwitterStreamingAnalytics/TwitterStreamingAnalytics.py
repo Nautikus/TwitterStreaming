@@ -1,4 +1,3 @@
-
 import settings
 import tweepy
 from tweepy.streaming import StreamListener
@@ -38,13 +37,13 @@ class MyStreamListener(tweepy.StreamListener):
                 table.insert(dict(
                   user_description = description,
                   user_location = loc,
-                  text = text,
                   user_name = name,
+                  created  = created,
+                  text = text,                  
                   coordinates = coords,
                   user_created = user_created,
                   user_followers = followers,
-                  id_str = id_str,
-                  created  = created,
+                  id_str = id_str,                  
                   retweet_count = retweets,
                   polarity = sent.polarity,
                   subjectivity = sent.subjectivity,
