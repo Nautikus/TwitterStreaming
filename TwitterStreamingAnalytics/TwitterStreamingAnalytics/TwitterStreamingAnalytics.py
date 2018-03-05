@@ -4,6 +4,7 @@ from tweepy.streaming import StreamListener
 import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
+import json
 
 db = dataset.connect(settings.CONNECTION_STRING)
 
@@ -13,13 +14,12 @@ API = tweepy.API(AUTH)
 
 class MyStreamListener(tweepy.StreamListener):
 
-    def on_status(self, status):
-        
-        if (not status.retweeted) and ('RT @' not in status.text) and ('https://t.co/' not in status.text):
-            
+    def on_status(self, status):        
+        if (not status.retweeted) and ('RT @' not in status.text) and ('https://t.co/' not in status.text):            
             description = status.user.description
             loc = status.user.location
-            text = status.text           
+            text = status.text
+            source = status.source
             name = status.user.screen_name
             coords = status.coordinates
             user_created = status.user.created_at
@@ -29,8 +29,16 @@ class MyStreamListener(tweepy.StreamListener):
             retweets = status.retweet_count  
             blob = TextBlob(text)
             sent = blob.sentiment
-            polarity = sent.polarity
+            lang = status.lang
+            #polarity - -1, 1. -1 is very negative.
+            #subjectivity is 0 to 1. 0 is objective, 1 is subjective
+            polarity = sent.polarity            
             subjectivity = sent.subjectivity
+
+            print(text)
+
+            if coords is not None:
+                coords = json.dumps(coords)
             
             table = db[settings.TABLE_NAME]          
             try:
@@ -39,6 +47,7 @@ class MyStreamListener(tweepy.StreamListener):
                   user_location = loc,
                   user_name = name,
                   created  = created,
+                  source = source,
                   text = text,                  
                   coordinates = coords,
                   user_created = user_created,
@@ -47,6 +56,7 @@ class MyStreamListener(tweepy.StreamListener):
                   retweet_count = retweets,
                   polarity = sent.polarity,
                   subjectivity = sent.subjectivity,
+                  language = lang,
                   ))
             except ProgrammingError as err:
                 print(err)
