@@ -1,11 +1,11 @@
-import settings
+import datetime, pytz
+import json
 import tweepy
-from tweepy.streaming import StreamListener
+#from tweepy.streaming import StreamListener
 import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
-import json
-import datetime, pytz
+import settings
 
 
 db = dataset.connect(settings.CONNECTION_STRING)
@@ -16,8 +16,8 @@ API = tweepy.API(AUTH)
 
 class MyStreamListener(tweepy.StreamListener):
 
-    def on_status(self, status):        
-        if (not status.retweeted) and ('RT @' not in status.text) and ('https://t.co/' not in status.text) and (status.lang == 'en'):            
+    def on_status(self, status):
+        if (not status.retweeted) and ('RT @' not in status.text) and ('https://t.co/' not in status.text) and (status.lang == 'en'):
             description = status.user.description
             loc = status.user.location
             text = status.text
@@ -26,13 +26,13 @@ class MyStreamListener(tweepy.StreamListener):
             coords = status.coordinates
             user_created = status.user.created_at
             followers = status.user.followers_count
-            id_str = status.id_str 
+            id_str = status.id_str
             blob = TextBlob(text)
             sent = blob.sentiment
             lang = status.lang
             #polarity - -1, 1. -1 is very negative.
             #subjectivity is 0 to 1. 0 is objective, 1 is subjective
-            polarity = sent.polarity            
+            polarity = sent.polarity
             subjectivity = sent.subjectivity
 
             #Adds the tzinfo to the creeated_at object, and then converts it to MST
@@ -40,30 +40,29 @@ class MyStreamListener(tweepy.StreamListener):
             mountain = pytz.timezone('US/Mountain')
             utctime = status.created_at.replace(tzinfo=utc)
             mtntime = utctime.astimezone(mountain)
-           
+        
             print(text)
 
             if coords is not None:
                 coords = json.dumps(coords)
 
 
-            table = db[settings.TABLE_NAME]          
+            table = db[settings.TABLE_NAME]
             try:
                 table.insert(dict(
-                  user_description = description,
-                  user_location = loc,
-                  user_name = name,
-                  created = mtntime,
-                  source = source,
-                  text = text,                  
-                  coordinates = coords,
-                  user_created = user_created,
-                  user_followers = followers,
-                  id_str = id_str,                  
-                  #retweet_count = retweets,
-                  polarity = polarity,
-                  subjectivity = subjectivity,
-                  language = lang,
+                    user_description = description,
+                    user_location = loc,
+                    user_name = name,
+                    created = mtntime,
+                    source = source,
+                    text = text,
+                    coordinates = coords,
+                    user_created = user_created,
+                    user_followers = followers,
+                    id_str = id_str,
+                    polarity = polarity,
+                    subjectivity = subjectivity,
+                    language = lang,
                   ))
             except ProgrammingError as err:
                 print(err)
