@@ -26,9 +26,7 @@ class MyStreamListener(tweepy.StreamListener):
             coords = status.coordinates
             user_created = status.user.created_at
             followers = status.user.followers_count
-            id_str = status.id_str
-            created = status.created_at
-            retweets = status.retweet_count  
+            id_str = status.id_str 
             blob = TextBlob(text)
             sent = blob.sentiment
             lang = status.lang
@@ -63,8 +61,8 @@ class MyStreamListener(tweepy.StreamListener):
                   user_followers = followers,
                   id_str = id_str,                  
                   #retweet_count = retweets,
-                  polarity = sent.polarity,
-                  subjectivity = sent.subjectivity,
+                  polarity = polarity,
+                  subjectivity = subjectivity,
                   language = lang,
                   ))
             except ProgrammingError as err:
