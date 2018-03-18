@@ -46,7 +46,6 @@ class MyStreamListener(tweepy.StreamListener):
             if coords is not None:
                 coords = json.dumps(coords)
 
-
             table = db[settings.TABLE_NAME]
             try:
                 table.insert(dict(
