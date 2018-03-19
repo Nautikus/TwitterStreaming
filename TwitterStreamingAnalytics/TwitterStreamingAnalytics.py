@@ -1,12 +1,10 @@
 import datetime, pytz
 import json
 import tweepy
-#from tweepy.streaming import StreamListener
 import dataset
 from textblob import TextBlob
 from sqlalchemy.exc import ProgrammingError
 import settings
-
 
 db = dataset.connect(settings.CONNECTION_STRING)
 
@@ -15,8 +13,8 @@ AUTH.set_access_token(settings.TWITTER_ACC_TOK, settings.TWITTER_ACC_SEC)
 API = tweepy.API(AUTH)
 
 class MyStreamListener(tweepy.StreamListener):
-
     def on_status(self, status):
+#This will take the tweets, and insert them into the sqlite DB
         if (not status.retweeted) and ('RT @' not in status.text) and ('https://t.co/' not in status.text) and (status.lang == 'en'):
             description = status.user.description
             loc = status.user.location
@@ -40,15 +38,17 @@ class MyStreamListener(tweepy.StreamListener):
             mountain = pytz.timezone('US/Mountain')
             utctime = status.created_at.replace(tzinfo=utc)
             mtntime = utctime.astimezone(mountain)
-        
+            
+            #Prints to console for monitoring
             print(text)
 
+            #Dumps coordinates if there are any
             if coords is not None:
                 coords = json.dumps(coords)
 
-            table = db[settings.TABLE_NAME]
+            tweettable = db[settings.TWEET_TABLE]
             try:
-                table.insert(dict(
+                tweettable.insert(dict(
                     user_description = description,
                     user_location = loc,
                     user_name = name,
@@ -65,6 +65,52 @@ class MyStreamListener(tweepy.StreamListener):
                   ))
             except ProgrammingError as err:
                 print(err)
+
+#This will grab the tweet text, pull the hashtags from it and add it to the DB
+            tweettxt = text
+            tweettxt = tweettxt.replace('#',' #')
+
+            for punct in '.!",;:%<>/~`()[]{}?':
+                tweettxt = tweettxt.replace(punct,' ')
+            
+            tweettxt = tweettxt.split()
+
+            hashtable = db[settings.HASHTAG_TABLE]
+            for word in tweettxt:
+                if word[0] == '#':
+                    hashtag = word.lower()
+                    if len(hashtag) > 0:
+                        try:
+                            hashtable.insert(dict(
+                                id_str = id_str,
+                                user_name = name,
+                                hashtag = hashtag,
+                                used = mtntime
+                            ))
+                        except ProgrammingError as err:
+                            print(err)
+
+#This will grab the @ mentions. Who the person is tweeting at.
+
+            atmention = text
+            atmention = atmention.replace('@',' @')
+
+            atmention = atmention.split()
+            mentiontable = db[settings.MENTION_TABLE]
+            for mention in atmention:
+                if mention[0] == "@":
+                    atmention = mention.lower()
+                    if len(atmention) > 0:
+                        try:
+                            mentiontable.insert(dict(
+                                id_str = id_str,
+                                user_name = name,
+                                atmention = atmention,
+                                used = mtntime
+                            ))                       
+                        except ProgrammingError as err:
+                            print(err)          
+
         
     def on_error(self, status_code):
         if status_code == 420:
