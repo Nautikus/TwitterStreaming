@@ -1,0 +1,8 @@
+-	Open connection to tweet table
+o	Select the first record
+o	Find all of the subsequent records that fall in the same hour as the first record
+o	Average the polarity and subjectivity
+o	Insert it into the averages table as datetime, average polarity, and average subjectivity
+o	Once the hour changes, write the first new record as the first record
+o	Repeat
+
