@@ -6,11 +6,12 @@ conn = sqlite3.connect('tweetstest.db')
 
 c = conn.cursor()
 
-c.execute('select created from tweet where id = 1')
-record = c.fetchall()
-print(type(c.fetchall()))
+#c.execute('select created, polarity, subjectivity from tweet')
+#record = c.fetchall()
+
+#print(type(record[0][0]))
 #print(record.strftime("%d"))
 
-#c.execute("SELECT strftime('%d', 'record') from tweet")
-
-#print(c.fetchall())
+c.execute("SELECT strftime('%d', 'record') from tweet")
+thing = c.fetchall
+print(thing)
