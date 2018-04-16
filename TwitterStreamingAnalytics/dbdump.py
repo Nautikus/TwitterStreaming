@@ -1,3 +1,5 @@
+#Exports database to csv
+
 import settings
 import dataset
 import tweepy
